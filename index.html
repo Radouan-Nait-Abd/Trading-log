@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trading Log</title>
+<style>
+  :root {
+    --bg: #0F1115;
+    --header-bg: #1A1D24;
+    --border: #2A2F3A;
+    --text: #FFFFFF;
+    --grey: #9AA4B2;
+    --blue: #60A5FA;
+    --green: #22C55E;
+    --red: #EF4444;
+    --purple: #A855F7;
+    --cyan: #22D3EE;
+    --green-bg: #0D2B1A;
+    --red-bg: #2B0D0D;
+    --row-hover: rgba(255,255,255,0.02);
+  }
+
+  html[data-theme="light"] {
+    --bg: #F4F5F7;
+    --header-bg: #FFFFFF;
+    --border: #DDE1E7;
+    --text: #14161A;
+    --grey: #6B7280;
+    --blue: #2563EB;
+    --green: #16A34A;
+    --red: #DC2626;
+    --purple: #9333EA;
+    --cyan: #0891B2;
+    --green-bg: #DCFCE7;
+    --red-bg: #FEE2E2;
+    --row-hover: rgba(0,0,0,0.03);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+    margin: 0;
+    padding: 24px 16px 60px;
+    min-height: 100vh;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  html[lang="ar"] body {
+    font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+  }
+
+  .container {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .top-bar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--header-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .top-bar h1 {
+    margin: 0;
+    font-size: 18px;
+  }
+
+  .top-bar .right-cluster {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .total-block {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .total-label-inline {
+    font-size: 11px;
+    color: var(--grey);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: bold;
+    white-space: nowrap;
+  }
+
+  .total-value-inline {
+    font-size: 20px;
+    font-weight: bold;
+    padding: 4px 14px;
+    border-radius: 6px;
+  }
+
+  /* Settings menu */
+  .settings-wrap { position: relative; }
+
+  .settings-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 8px 10px;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+  }
+  .settings-btn:hover { border-color: var(--blue); }
+
+  .settings-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    inset-inline-end: 0;
+    background: var(--header-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    min-width: 200px;
+    display: none;
+    z-index: 60;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+  .settings-menu.show { display: block; }
+
+  .settings-section { margin-bottom: 14px; }
+  .settings-section:last-child { margin-bottom: 0; }
+
+  .settings-label {
+    font-size: 11px;
+    color: var(--grey);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: bold;
+    margin-bottom: 8px;
+  }
+
+  .toggle-group {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .toggle-option {
+    flex: 1;
+    padding: 8px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: bold;
+    background: var(--bg);
+    color: var(--grey);
+    border: none;
+  }
+
+  .toggle-option.active {
+    background: var(--blue);
+    color: #ffffff;
+  }
+
+  /* Form */
+  .form-card {
+    background: var(--header-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 24px;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 11px;
+    color: var(--grey);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .field input,
+  .field select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 9px 8px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+
+  .field input:focus,
+  .field select:focus {
+    outline: none;
+    border-color: var(--blue);
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .add-btn {
+    flex: 1;
+    background: var(--blue);
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 11px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .add-btn:hover { opacity: 0.9; }
+  .add-btn.editing { background: var(--cyan); }
+
+  .cancel-edit-btn {
+    flex: 0 0 110px;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 11px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    display: none;
+  }
+  .cancel-edit-btn.show { display: block; }
+
+  .editing-row {
+    outline: 2px solid var(--cyan);
+    outline-offset: -1px;
+  }
+
+  .edit-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--cyan);
+    border-radius: 6px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-inline-end: 6px;
+  }
+  .edit-btn:hover { background: rgba(34,211,238,0.12); }
+
+  /* Table */
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 760px;
+  }
+
+  thead th {
+    background: var(--header-bg);
+    color: var(--text);
+    font-weight: bold;
+    font-size: 13px;
+    padding: 12px 10px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  tbody td {
+    text-align: center;
+    padding: 10px 8px;
+    font-size: 13.5px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  tbody tr:hover { background: var(--row-hover); }
+
+  .col-date { color: var(--grey); }
+  .col-asset { color: var(--blue); font-weight: 600; }
+  .col-entry, .col-exit { color: var(--purple); }
+  .col-lot { color: var(--cyan); }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 5px;
+    font-weight: bold;
+    font-size: 12.5px;
+  }
+  .badge-buy { color: var(--green); background: var(--green-bg); }
+  .badge-sell { color: var(--red); background: var(--red-bg); }
+
+  .pnl-pos { color: var(--green); font-weight: bold; background: var(--green-bg); }
+  .pnl-neg { color: var(--red); font-weight: bold; background: var(--red-bg); }
+  .pnl-zero { color: var(--text); }
+
+  .del-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--red);
+    border-radius: 6px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .del-btn:hover { background: var(--red-bg); }
+
+  .empty-row td {
+    color: var(--grey);
+    padding: 30px;
+    font-style: italic;
+  }
+
+  .actions-bar {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 18px;
+  }
+
+  .export-btn {
+    background: var(--header-bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: bold;
+  }
+  .export-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+
+  /* Confirm modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: var(--header-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    width: 90%;
+    max-width: 320px;
+    text-align: center;
+  }
+  .modal-box p { margin: 0 0 16px; font-size: 14px; }
+  .modal-actions { display: flex; gap: 10px; }
+  .modal-actions button {
+    flex: 1;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 13px;
+  }
+  .modal-cancel { background: var(--bg); color: var(--text); }
+  .modal-confirm { background: var(--red); color: #ffffff; border-color: var(--red); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="top-bar">
+    <h1 id="appTitle">📊 Trading Log</h1>
+    <div class="right-cluster">
+      <div class="total-block">
+        <span class="total-label-inline" id="totalLabel">Total PNL</span>
+        <span class="total-value-inline" id="totalPnl">0.00</span>
+      </div>
+      <div class="settings-wrap">
+        <button class="settings-btn" id="settingsBtn">⚙</button>
+        <div class="settings-menu" id="settingsMenu">
+          <div class="settings-section">
+            <div class="settings-label" id="langLabel">Language</div>
+            <div class="toggle-group">
+              <button class="toggle-option" id="langEnBtn" data-lang="en">EN</button>
+              <button class="toggle-option" id="langArBtn" data-lang="ar">AR</button>
+            </div>
+          </div>
+          <div class="settings-section">
+            <div class="settings-label" id="themeLabel">Theme</div>
+            <div class="toggle-group">
+              <button class="toggle-option" id="themeDarkBtn" data-theme="dark">🌙</button>
+              <button class="toggle-option" id="themeLightBtn" data-theme="light">☀️</button>
+            </div>
+          </div>
+          <div class="settings-section">
+            <div class="settings-label" id="exportFormatLabel">Export Format</div>
+            <div class="toggle-group">
+              <button class="toggle-option" id="formatJsonBtn" data-format="json">JSON</button>
+              <button class="toggle-option" id="formatXlsBtn" data-format="xls">XLS</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <div class="form-grid">
+      <div class="field">
+        <label id="lblDate">Date</label>
+        <input type="date" id="inpDate" placeholder="YYYY-MM-DD">
+      </div>
+      <div class="field">
+        <label id="lblAsset">Asset</label>
+        <input type="text" id="inpAsset" placeholder="NDX100">
+      </div>
+      <div class="field">
+        <label id="lblType">Order Type</label>
+        <select id="inpType">
+          <option value="Buy" id="optBuy">Buy</option>
+          <option value="Sell" id="optSell">Sell</option>
+        </select>
+      </div>
+      <div class="field">
+        <label id="lblEntry">Entry Price</label>
+        <input type="number" step="any" id="inpEntry" placeholder="0.00">
+      </div>
+      <div class="field">
+        <label id="lblExit">Exit Price</label>
+        <input type="number" step="any" id="inpExit" placeholder="0.00">
+      </div>
+      <div class="field">
+        <label id="lblLot">Lot Size</label>
+        <input type="number" step="any" id="inpLot" placeholder="0.10">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="add-btn" id="addBtn">+ Add Trade</button>
+      <button class="cancel-edit-btn" id="cancelEditBtn">Cancel</button>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th id="thDate">Date</th>
+          <th id="thAsset">Asset</th>
+          <th id="thType">Order Type</th>
+          <th id="thEntry">Entry Price</th>
+          <th id="thExit">Exit Price</th>
+          <th id="thLot">Lot Size</th>
+          <th id="thPnl">PNL ($)</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <!-- rows injected here -->
+      </tbody>
+    </table>
+  </div>
+
+  <div class="actions-bar">
+    <button class="export-btn" id="exportBtn">⬇ Export JSON</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <p id="modalText">Delete this trade? This can't be undone.</p>
+    <div class="modal-actions">
+      <button class="modal-cancel" id="modalCancel">Cancel</button>
+      <button class="modal-confirm" id="modalConfirm">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'tradingLogData';
+  const LANG_KEY = 'tradingLogLang';
+  const THEME_KEY = 'tradingLogTheme';
+  const FORMAT_KEY = 'tradingLogExportFormat';
+
+  let trades = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  let pendingDeleteId = null;
+  let editingId = null;
+  let lang = localStorage.getItem(LANG_KEY) || 'en';
+  let theme = localStorage.getItem(THEME_KEY) || 'dark';
+  let exportFormat = localStorage.getItem(FORMAT_KEY) || 'json';
+
+  const I18N = {
+    en: {
+      title: '📊 Trading Log',
+      totalLabel: 'Total PNL',
+      lang: 'Language',
+      themeLab: 'Theme',
+      exportFormatLab: 'Export Format',
+      date: 'Date',
+      datePlaceholder: 'YYYY-MM-DD',
+      asset: 'Asset',
+      type: 'Order Type',
+      entry: 'Entry Price',
+      exit: 'Exit Price',
+      lot: 'Lot Size',
+      pnl: 'PNL ($)',
+      buy: 'Buy',
+      sell: 'Sell',
+      addBtn: '+ Add Trade',
+      saveBtn: '✓ Save Changes',
+      cancelBtn: 'Cancel',
+      editBtn: 'Edit',
+      delBtn: 'Delete',
+      exportBtn: '⬇ Export JSON',
+      emptyState: 'No trades yet — add your first one above.',
+      modalText: "Delete this trade? This can't be undone.",
+      modalCancel: 'Cancel',
+      modalConfirm: 'Delete',
+      validation: 'Please fill in at least Asset, Entry Price, and Lot Size.'
+    },
+    ar: {
+      title: '📊 سجل التداول',
+      totalLabel: 'الربح/الخسارة الإجمالي',
+      lang: 'اللغة',
+      themeLab: 'المظهر',
+      exportFormatLab: 'صيغة التصدير',
+      date: 'التاريخ',
+      datePlaceholder: 'سنة-شهر-يوم',
+      asset: 'الأصل',
+      type: 'نوع الصفقة',
+      entry: 'سعر الدخول',
+      exit: 'سعر الخروج',
+      lot: 'حجم اللوت',
+      pnl: 'الربح/الخسارة ($)',
+      buy: 'شراء',
+      sell: 'بيع',
+      addBtn: '+ إضافة صفقة',
+      saveBtn: '✓ حفظ التغييرات',
+      cancelBtn: 'إلغاء',
+      editBtn: 'تعديل',
+      delBtn: 'حذف',
+      exportBtn: '⬇ تصدير JSON',
+      emptyState: 'لا توجد صفقات بعد — أضف أول صفقة بالأعلى.',
+      modalText: 'هل تريد حذف هذه الصفقة؟ لا يمكن التراجع عن هذا الإجراء.',
+      modalCancel: 'إلغاء',
+      modalConfirm: 'حذف',
+      validation: 'يرجى تعبئة الأصل وسعر الدخول وحجم اللوت على الأقل.'
+    }
+  };
+
+  const tbody = document.getElementById('tbody');
+  const totalPnlEl = document.getElementById('totalPnl');
+  const modalOverlay = document.getElementById('modalOverlay');
+  const addBtn = document.getElementById('addBtn');
+  const cancelEditBtn = document.getElementById('cancelEditBtn');
+  const settingsBtn = document.getElementById('settingsBtn');
+  const settingsMenu = document.getElementById('settingsMenu');
+
+  function calcPnl(trade) {
+    const { type, entry, exit, lot } = trade;
+    if (exit === '' || exit === null || isNaN(exit)) return null;
+    if (type === 'Buy') return (exit - entry) * lot;
+    return (entry - exit) * lot;
+  }
+
+  function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(trades));
+  }
+
+  function formatNum(n) {
+    return Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function applyLanguage() {
+    const t = I18N[lang];
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+
+    document.getElementById('appTitle').textContent = t.title;
+    document.getElementById('totalLabel').textContent = t.totalLabel;
+    document.getElementById('langLabel').textContent = t.lang;
+    document.getElementById('themeLabel').textContent = t.themeLab;
+    document.getElementById('exportFormatLabel').textContent = t.exportFormatLab;
+    document.getElementById('lblDate').textContent = t.date;
+    document.getElementById('inpDate').setAttribute('placeholder', t.datePlaceholder);
+    document.getElementById('lblAsset').textContent = t.asset;
+    document.getElementById('lblType').textContent = t.type;
+    document.getElementById('lblEntry').textContent = t.entry;
+    document.getElementById('lblExit').textContent = t.exit;
+    document.getElementById('lblLot').textContent = t.lot;
+    document.getElementById('optBuy').textContent = t.buy;
+    document.getElementById('optSell').textContent = t.sell;
+    document.getElementById('thDate').textContent = t.date;
+    document.getElementById('thAsset').textContent = t.asset;
+    document.getElementById('thType').textContent = t.type;
+    document.getElementById('thEntry').textContent = t.entry;
+    document.getElementById('thExit').textContent = t.exit;
+    document.getElementById('thLot').textContent = t.lot;
+    document.getElementById('thPnl').textContent = t.pnl;
+    document.getElementById('exportBtn').textContent = t.exportBtn;
+    document.getElementById('modalText').textContent = t.modalText;
+    document.getElementById('modalCancel').textContent = t.modalCancel;
+    document.getElementById('modalConfirm').textContent = t.modalConfirm;
+
+    addBtn.textContent = editingId !== null ? t.saveBtn : t.addBtn;
+    cancelEditBtn.textContent = t.cancelBtn;
+
+    document.getElementById('langEnBtn').classList.toggle('active', lang === 'en');
+    document.getElementById('langArBtn').classList.toggle('active', lang === 'ar');
+
+    render();
+  }
+
+  function applyTheme() {
+    document.documentElement.setAttribute('data-theme', theme);
+    document.getElementById('themeDarkBtn').classList.toggle('active', theme === 'dark');
+    document.getElementById('themeLightBtn').classList.toggle('active', theme === 'light');
+  }
+
+  function applyExportFormat() {
+    document.getElementById('formatJsonBtn').classList.toggle('active', exportFormat === 'json');
+    document.getElementById('formatXlsBtn').classList.toggle('active', exportFormat === 'xls');
+  }
+
+  function render() {
+    const t = I18N[lang];
+    tbody.innerHTML = '';
+
+    if (trades.length === 0) {
+      tbody.innerHTML = `<tr class="empty-row"><td colspan="8">${t.emptyState}</td></tr>`;
+    } else {
+      trades.forEach(trade => {
+        const pnl = calcPnl(trade);
+        const pnlClass = pnl === null ? '' : pnl > 0 ? 'pnl-pos' : pnl < 0 ? 'pnl-neg' : 'pnl-zero';
+        const pnlDisplay = pnl === null ? '' : formatNum(pnl);
+        const typeBadgeClass = trade.type === 'Buy' ? 'badge-buy' : 'badge-sell';
+        const typeLabel = trade.type === 'Buy' ? t.buy : t.sell;
+
+        const row = document.createElement('tr');
+        if (trade.id === editingId) row.classList.add('editing-row');
+        row.innerHTML = `
+          <td class="col-date">${trade.date || ''}</td>
+          <td class="col-asset">${trade.asset}</td>
+          <td><span class="badge ${typeBadgeClass}">${typeLabel}</span></td>
+          <td class="col-entry">${formatNum(trade.entry)}</td>
+          <td class="col-exit">${trade.exit === '' ? '' : formatNum(trade.exit)}</td>
+          <td class="col-lot">${formatNum(trade.lot)}</td>
+          <td class="${pnlClass}">${pnlDisplay}</td>
+          <td>
+            <button class="edit-btn" data-id="${trade.id}">${t.editBtn}</button>
+            <button class="del-btn" data-id="${trade.id}">${t.delBtn}</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    const total = trades.reduce((sum, tr) => {
+      const p = calcPnl(tr);
+      return sum + (p === null ? 0 : p);
+    }, 0);
+
+    totalPnlEl.textContent = formatNum(total);
+    totalPnlEl.className = 'total-value-inline ' + (total > 0 ? 'pnl-pos' : total < 0 ? 'pnl-neg' : 'pnl-zero');
+  }
+
+  function clearForm() {
+    document.getElementById('inpDate').value = '';
+    document.getElementById('inpAsset').value = '';
+    document.getElementById('inpType').value = 'Buy';
+    document.getElementById('inpEntry').value = '';
+    document.getElementById('inpExit').value = '';
+    document.getElementById('inpLot').value = '';
+  }
+
+  function enterEditMode(trade) {
+    editingId = trade.id;
+    document.getElementById('inpDate').value = trade.date || '';
+    document.getElementById('inpAsset').value = trade.asset;
+    document.getElementById('inpType').value = trade.type;
+    document.getElementById('inpEntry').value = trade.entry;
+    document.getElementById('inpExit').value = trade.exit === '' ? '' : trade.exit;
+    document.getElementById('inpLot').value = trade.lot;
+
+    addBtn.textContent = I18N[lang].saveBtn;
+    addBtn.classList.add('editing');
+    cancelEditBtn.classList.add('show');
+    render();
+    document.querySelector('.form-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function exitEditMode() {
+    editingId = null;
+    addBtn.textContent = I18N[lang].addBtn;
+    addBtn.classList.remove('editing');
+    cancelEditBtn.classList.remove('show');
+    clearForm();
+    render();
+  }
+
+  addBtn.addEventListener('click', () => {
+    const date = document.getElementById('inpDate').value;
+    const asset = document.getElementById('inpAsset').value.trim();
+    const type = document.getElementById('inpType').value;
+    const entry = parseFloat(document.getElementById('inpEntry').value);
+    const exitVal = document.getElementById('inpExit').value;
+    const exit = exitVal === '' ? '' : parseFloat(exitVal);
+    const lot = parseFloat(document.getElementById('inpLot').value);
+
+    if (!asset || isNaN(entry) || isNaN(lot)) {
+      alert(I18N[lang].validation);
+      return;
+    }
+
+    if (editingId !== null) {
+      const idx = trades.findIndex(t => t.id === editingId);
+      if (idx !== -1) {
+        trades[idx] = { ...trades[idx], date, asset, type, entry, exit, lot };
+      }
+      save();
+      exitEditMode();
+    } else {
+      trades.push({ id: Date.now(), date, asset, type, entry, exit, lot });
+      save();
+      clearForm();
+      render();
+    }
+  });
+
+  cancelEditBtn.addEventListener('click', exitEditMode);
+
+  tbody.addEventListener('click', (e) => {
+    if (e.target.classList.contains('del-btn')) {
+      pendingDeleteId = Number(e.target.dataset.id);
+      modalOverlay.classList.add('show');
+    }
+    if (e.target.classList.contains('edit-btn')) {
+      const id = Number(e.target.dataset.id);
+      const trade = trades.find(t => t.id === id);
+      if (trade) enterEditMode(trade);
+    }
+  });
+
+  document.getElementById('modalCancel').addEventListener('click', () => {
+    pendingDeleteId = null;
+    modalOverlay.classList.remove('show');
+  });
+
+  document.getElementById('modalConfirm').addEventListener('click', () => {
+    trades = trades.filter(t => t.id !== pendingDeleteId);
+    if (pendingDeleteId === editingId) exitEditMode();
+    save();
+    render();
+    pendingDeleteId = null;
+    modalOverlay.classList.remove('show');
+  });
+
+  function exportJson() {
+    const dataStr = JSON.stringify(trades, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    downloadBlob(blob, `trading_log_${dateStamp()}.json`);
+  }
+
+  function exportXls() {
+    const t = I18N[lang];
+    const headers = [t.date, t.asset, t.type, t.entry, t.exit, t.lot, t.pnl];
+
+    let rows = trades.map(trade => {
+      const pnl = calcPnl(trade);
+      const typeLabel = trade.type === 'Buy' ? t.buy : t.sell;
+      return [
+        trade.date || '',
+        trade.asset,
+        typeLabel,
+        trade.entry,
+        trade.exit === '' ? '' : trade.exit,
+        trade.lot,
+        pnl === null ? '' : pnl.toFixed(2)
+      ];
+    });
+
+    const total = trades.reduce((sum, tr) => {
+      const p = calcPnl(tr);
+      return sum + (p === null ? 0 : p);
+    }, 0);
+
+    let html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
+    html += '<head><meta charset="UTF-8"></head><body><table border="1">';
+    html += '<tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
+    rows.forEach(r => {
+      html += '<tr>' + r.map(c => `<td>${c}</td>`).join('') + '</tr>';
+    });
+    html += `<tr><td colspan="6" align="right"><b>${t.totalLabel}</b></td><td><b>${total.toFixed(2)}</b></td></tr>`;
+    html += '</table></body></html>';
+
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+    downloadBlob(blob, `trading_log_${dateStamp()}.xls`);
+  }
+
+  function dateStamp() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    if (exportFormat === 'xls') {
+      exportXls();
+    } else {
+      exportJson();
+    }
+  });
+
+  // Settings menu toggle
+  settingsBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    settingsMenu.classList.toggle('show');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!settingsMenu.contains(e.target) && e.target !== settingsBtn) {
+      settingsMenu.classList.remove('show');
+    }
+  });
+
+  document.getElementById('langEnBtn').addEventListener('click', () => {
+    lang = 'en';
+    localStorage.setItem(LANG_KEY, lang);
+    applyLanguage();
+  });
+
+  document.getElementById('langArBtn').addEventListener('click', () => {
+    lang = 'ar';
+    localStorage.setItem(LANG_KEY, lang);
+    applyLanguage();
+  });
+
+  document.getElementById('themeDarkBtn').addEventListener('click', () => {
+    theme = 'dark';
+    localStorage.setItem(THEME_KEY, theme);
+    applyTheme();
+  });
+
+  document.getElementById('themeLightBtn').addEventListener('click', () => {
+    theme = 'light';
+    localStorage.setItem(THEME_KEY, theme);
+    applyTheme();
+  });
+
+  document.getElementById('formatJsonBtn').addEventListener('click', () => {
+    exportFormat = 'json';
+    localStorage.setItem(FORMAT_KEY, exportFormat);
+    applyExportFormat();
+  });
+
+  document.getElementById('formatXlsBtn').addEventListener('click', () => {
+    exportFormat = 'xls';
+    localStorage.setItem(FORMAT_KEY, exportFormat);
+    applyExportFormat();
+  });
+
+  // Init
+  applyTheme();
+  applyExportFormat();
+  applyLanguage();
+</script>
+
+</body>
+</html>
